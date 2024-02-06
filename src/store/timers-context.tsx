@@ -1,4 +1,5 @@
 import React from 'react';
+import Timer from '../components/Timer';
 
 type Timer = {
   name: string;
@@ -18,29 +19,63 @@ type TimersContextValue = TimersState & {
   startTimers: () => void;
   stopTimers: () => void;
 };
-type Action = {
-  type: 'ADD_TIMERS' | 'START_TIMERS' | 'STOP_TIMERS';
+type StartTimerAction = {
+  type: 'START_TIMERS';
 };
+type StopTimerAction = {
+  type: 'STOP_TIMERS';
+};
+type AddTimerAction = {
+  type: 'ADD_TIMERS';
+  payload: Timer;
+};
+type Action = StartTimerAction | StopTimerAction | AddTimerAction;
 type TimeProps = {
   children: React.ReactNode;
 };
-const timerReducer = (state: TimersState, action: Action): TimersState => {};
+const timerReducer = (state: TimersState, action: Action): TimersState => {
+  if (action.type === 'START_TIMERS') {
+    return {
+      ...state,
+      isRunning: true,
+    };
+  }
+  if (action.type === 'STOP_TIMERS') {
+    return {
+      ...state,
+      isRunning: false,
+    };
+  }
+  if (action.type === 'ADD_TIMERS') {
+    return {
+      ...state,
+      timers: [
+        ...state.timers,
+        {
+          name: action.payload.name,
+          duration: action.payload.duration,
+        },
+      ],
+    };
+  }
+  return state;
+};
 
 const TimersContext = React.createContext<TimersContextValue | null>(null);
 export const useGlobalContext = () => React.useContext(TimersContext)!;
 const TimerContextProvider: React.FC<TimeProps> = ({ children }) => {
-  const [timerState, dispatch] = React.useReducer(reducer, initialState);
+  const [timerState, dispatch] = React.useReducer(timerReducer, initialState);
   const ctx: TimersContextValue = {
-    isRunning: false,
-    timers: [],
-    addTimer(timerData) {
-      dispatch({ type: 'ADD_TIMERS' });
+    isRunning: timerState.isRunning,
+    timers: timerState.timers,
+    addTimer(timer) {
+      dispatch({ type: 'ADD_TIMERS', payload: timer });
     },
     startTimers() {
       dispatch({ type: 'START_TIMERS' });
     },
     stopTimers() {
-      dispatch({ type: 'START_TIMERS' });
+      dispatch({ type: 'STOP_TIMERS' });
     },
   };
   return (
